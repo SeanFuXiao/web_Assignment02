@@ -1,12 +1,24 @@
+const Category = require('../models/Category');
 const Product = require('../models/Product');
 
-// Controller for getting all products
-exports.getAllProducts = async (req, res) => {
+// Controller for getting by name or get all products
+exports.getProducts = async (req, res) => {
+  const productName = req.query.name;
+
   try {
-    const products = await Product.find();
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ error: 'Error getting products' });
+      let products;
+      if (productName) {
+          // If a name query parameter is present, search by name
+          products = await Product.find({
+              name: new RegExp(productName, 'i') // Case-insensitive search
+          });
+      } else {
+          // If no name query parameter is present, fetch all products
+          products = await Product.find();
+      }
+      res.json(products);
+  } catch (error) {
+      res.status(500).send('An error occurred while querying the database');
   }
 };
 
@@ -31,13 +43,14 @@ exports.addProduct = async (req, res) => {
     description,
     price,
     quantity,
-    category,
+    category
   });
+  console.log(req.body);
   try {
     const newProduct = await product.save();
     res.status(201).json(newProduct);
   } catch (err) {
-    res.status(400).json({ error: 'Error adding product' });
+    res.status(400).json({ error: err });
   }
 };
 
@@ -74,16 +87,5 @@ exports.removeAllProducts = async (req, res) => {
     res.json({ message: 'All products removed' });
   } catch (err) {
     res.status(500).json({ error: 'Error removing products' });
-  }
-};
-
-// Controller for finding products by name
-exports.findProductsByName = async (req, res) => {
-  const { name } = req.query;
-  try {
-    const products = await Product.find({ name: { $regex: name, $options: 'i' } });
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ error: 'Error finding products' });
   }
 };
